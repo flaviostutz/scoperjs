@@ -5,6 +5,8 @@ build: install
 	pnpm exec esbuild src/index.ts --bundle --platform=node --minify --outfile=dist/index.js
 	pnpm exec tsc --emitDeclarationOnly --outDir dist
 
+	-find ./dist -name "*.test.d.ts" -exec rm -rf {} \;
+
 lint:
 	pnpm exec eslint . --ext .ts
 	pnpm exec tsc -noEmit --skipLibCheck

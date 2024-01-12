@@ -1,3 +1,6 @@
+import cloneDeep from 'lodash.clonedeep';
+import merge from 'lodash.merge';
+
 /* eslint-disable no-param-reassign */
 
 // Like Partial, but makes nested properties optional too
@@ -33,12 +36,12 @@ export const Scoper = {
       getValue: (scope: string): T => {
         const scopeValues = scopes[scope];
         if (scopeValues) {
-          // mergeRecursive rewrites input values, so create a copy before invoking
-          const dvalues = JSON.parse(JSON.stringify(defaultScope));
-          const svalues = JSON.parse(JSON.stringify(scopeValues));
+          // merge rewrites input values, so create a copy before invoking
+          const dvalues = cloneDeep<T>(defaultScope);
+          const svalues = cloneDeep<Subset<T>>(scopeValues);
           // we know the result has the required fields of T as minimum, because the default scope
           // is merged as the basis, and the default scope is set checking if it's T
-          return mergeRecursive(dvalues, svalues) as T;
+          return merge(dvalues, svalues);
         }
         return defaultScope;
       },
@@ -53,24 +56,4 @@ export const Scoper = {
       },
     };
   },
-};
-
-// this will rewrite input variables, so copy values before using it
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const mergeRecursive = (obj1: any, obj2: any): any => {
-  // eslint-disable-next-line guard-for-in, no-restricted-syntax
-  for (const p in obj2) {
-    try {
-      // Property in destination object set; update its value.
-      if (obj2[p].constructor === Object) {
-        obj1[p] = mergeRecursive(obj1[p], obj2[p]);
-      } else {
-        obj1[p] = obj2[p];
-      }
-    } catch (e) {
-      // Property in destination object not set; create it and set its value.
-      obj1[p] = obj2[p];
-    }
-  }
-  return obj1;
 };

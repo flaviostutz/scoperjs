@@ -1,4 +1,24 @@
+/* eslint-disable fp/no-class */
+
 import { Scoper } from './scoperjs';
+
+class TestInfoClass {
+  public var1: string;
+
+  constructor(var1: string) {
+    this.var1 = var1;
+  }
+
+  // // defining getter method
+  // get var1(): string {
+  //   return `${this.var1}c`;
+  // }
+
+  // // defining setter method
+  // set var1(value1: string) {
+  //   this.var1 = `${value1}b`;
+  // }
+}
 
 type TestInfo = {
   test1?: string;
@@ -71,22 +91,43 @@ describe('scoper', () => {
         test23: 'aaaa',
       },
     });
+  });
+
+  it('internal deep clone shouldnt mess with class instances (this was a bug when using JSON.parse(stringify()) to clone objects)', () => {
+    type TestInfo1 = {
+      test1?: string;
+      testInfo: TestInfoClass;
+    };
+
+    // set default values
+    const scoper = Scoper.create<TestInfo1>({
+      test1: 'test1',
+      testInfo: new TestInfoClass('v0'),
+    });
+
+    // set context value
+    const testInfoScope1 = new TestInfoClass('v1');
+    scoper.setScopeValue('scope1', {
+      testInfo: testInfoScope1,
+    });
+    const testInfoScope2 = new TestInfoClass('v1');
+    scoper.setScopeValue('scope2', {
+      test1: 'test2',
+      testInfo: testInfoScope2,
+    });
 
     // should return merged properties
     expect(scoper.getValue('scope1')).toStrictEqual({
-      test2: {
-        test22: 3434,
-      },
+      test1: 'test1',
+      testInfo: testInfoScope1,
     });
     expect(scoper.getValue('scope2')).toStrictEqual({
-      test2: {
-        test22: 3434,
-        test23: 'aaaa',
-      },
+      test1: 'test2',
+      testInfo: testInfoScope2,
     });
   });
 
-  it('check if internal states are not being mutated (this was a bug because of how "merge" worked before)', () => {
+  it('check if internal states are not being mutated (this was a bug because of how "merge" worked before before cloning internal objects)', () => {
     // set default values
     const scoper = Scoper.create<TestInfo>({
       test1: 'bbb',
